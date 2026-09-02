@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ heading }} · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5" style="max-width: 48rem;">
+    <div class="d-flex justify-content-between align-items-center mb-4"><h1 class="h2 mb-0">{{ heading }}</h1><a class="btn btn-outline-secondary" href="{{ path('app_attribute_index') }}">Back to library</a></div>
+    {{ form_start(form) }}
+        {{ form_row(form.name) }}
+        {{ form_row(form.category) }}
+        {{ form_row(form.type) }}
+        {{ form_row(form.description) }}
+        {{ form_row(form.optionsText) }}
+        <button class="btn btn-primary" type="submit">Save attribute</button>
+    {{ form_end(form) }}
+</main>
+{% endblock %}

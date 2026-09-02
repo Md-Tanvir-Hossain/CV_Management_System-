@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}CV Management System{% endblock %}
+
+{% block body %}
+<main class="container py-5">
+    <section class="row align-items-center g-5 mb-5">
+        <div class="col-lg-7">
+            <p class="text-uppercase small fw-semibold text-primary mb-3">Recruitment workspace</p>
+            <h1 class="display-4 fw-bold mb-3">Build a CV once. Shape it for every position.</h1>
+            <p class="lead text-secondary mb-4">A shared attribute library connects candidate profiles, position templates, and focused CVs in one simple workspace.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-lg" href="#positions">Browse positions</a>
+                <a class="btn btn-outline-secondary btn-lg" href="#how-it-works">See how it works</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="border rounded-3 bg-white p-4 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-semibold">Platform snapshot</span>
+                    <span class="badge text-bg-light">Coming online</span>
+                </div>
+                <div class="row g-3 text-center">
+                    <div class="col-6"><div class="border rounded p-3"><div class="h3 mb-1">0</div><small class="text-secondary">Positions</small></div></div>
+                    <div class="col-6"><div class="border rounded p-3"><div class="h3 mb-1">0</div><small class="text-secondary">Published CVs</small></div></div>
+                    <div class="col-6"><div class="border rounded p-3"><div class="h3 mb-1">0</div><small class="text-secondary">Candidates</small></div></div>
+                    <div class="col-6"><div class="border rounded p-3"><div class="h3 mb-1">0</div><small class="text-secondary">Recruiters</small></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="positions" class="border-top pt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Latest positions</h2>
+            <span class="text-secondary small">No positions yet</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>Position</th><th>Visibility</th><th>Updated</th></tr></thead>
+                <tbody><tr><td colspan="3" class="text-center text-secondary py-4">Positions created by recruiters will appear here.</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="row g-4">
+        <div class="col-md-4"><h3 class="h5">1. Reuse attributes</h3><p class="text-secondary">Define professional fields once and use them across profiles and position templates.</p></div>
+        <div class="col-md-4"><h3 class="h5">2. Match the role</h3><p class="text-secondary">Recruiters select the attributes and access rules that matter for each position.</p></div>
+        <div class="col-md-4"><h3 class="h5">3. Publish with confidence</h3><p class="text-secondary">Candidates review the generated CV, complete missing values, and publish when ready.</p></div>
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+{% block title %}Attribute Library · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div><p class="text-uppercase small fw-semibold text-primary mb-1">M2 · Shared data</p><h1 class="h2 mb-0">Attribute Library</h1></div>
+        <a class="btn btn-primary" href="{{ path('app_attribute_new') }}">Add attribute</a>
+    </div>
+
+    {% for message in app.flashes('success') %}<div class="alert alert-success">{{ message }}</div>{% endfor %}
+    {% for message in app.flashes('warning') %}<div class="alert alert-warning">{{ message }}</div>{% endfor %}
+
+    <form class="row g-2 align-items-end mb-4" method="get">
+        <div class="col-md-6"><label class="form-label" for="attribute-search">Starts with</label><input class="form-control" id="attribute-search" name="q" value="{{ query }}" placeholder="Search by attribute name"></div>
+        <div class="col-md-4"><label class="form-label" for="attribute-category">Category</label><select class="form-select" id="attribute-category" name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category.value }}"{% if selectedCategory and selectedCategory.value == category.value %} selected{% endif %}>{{ category.value|title }}</option>{% endfor %}</select></div>
+        <div class="col-md-2 d-grid"><button class="btn btn-outline-primary" type="submit">Filter</button></div>
+    </form>
+
+    <form method="post" id="attribute-actions">
+        <div class="d-flex align-items-center gap-2 mb-2" data-selection-toolbar hidden>
+            <span class="small text-secondary" data-selection-count>0 selected</span>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-edit-selected disabled>Edit selected</button>
+            <button class="btn btn-sm btn-outline-danger" type="submit" formaction="#" data-delete-selected disabled>Delete selected</button>
+        </div>
+        <div class="table-responsive border rounded bg-white">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th scope="col" class="ps-3"><span class="visually-hidden">Select</span></th><th scope="col">Name</th><th scope="col">Category</th><th scope="col">Type</th><th scope="col">Description</th><th scope="col">Built-in</th></tr></thead>
+                <tbody>
+                {% for attribute in attributes %}
+                    <tr>
+                        <td class="ps-3"><input class="form-check-input" type="checkbox" name="selected[]" value="{{ attribute.id }}" data-attribute-id="{{ attribute.id }}" aria-label="Select {{ attribute.name }}"></td>
+                        <td class="fw-semibold">{{ attribute.name }}</td><td>{{ attribute.category.value|title }}</td><td><span class="badge text-bg-light">{{ attribute.type.value }}</span></td><td class="text-secondary">{{ attribute.description ?: 'No description' }}</td><td>{% if attribute.isBuiltin %}<span class="badge text-bg-secondary">Yes</span>{% else %}No{% endif %}</td>
+                    </tr>
+                {% else %}<tr><td colspan="6" class="text-center text-secondary py-5">No attributes match this filter.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</main>
+<script>
+    const toolbar = document.querySelector('[data-selection-toolbar]');
+    const count = document.querySelector('[data-selection-count]');
+    const editButton = document.querySelector('[data-edit-selected]');
+    const deleteButton = document.querySelector('[data-delete-selected]');
+    const checkboxes = [...document.querySelectorAll('[data-attribute-id]')];
+    const updateSelection = () => {
+        const selected = checkboxes.filter((checkbox) => checkbox.checked);
+        toolbar.hidden = selected.length === 0;
+        count.textContent = `${selected.length} selected`;
+        editButton.disabled = selected.length !== 1;
+        deleteButton.disabled = selected.length !== 1;
+        if (selected.length === 1) {
+            editButton.onclick = () => window.location.href = `/attributes/${selected[0].value}/edit`;
+            deleteButton.formAction = `/attributes/${selected[0].value}/delete`;
+        }
+    };
+    checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelection));
+</script>
+{% endblock %}
