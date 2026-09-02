@@ -32,6 +32,9 @@ Temporary Items
 # iCloud generated files
 *.icloud
 
+
+### symfony ###
+
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php

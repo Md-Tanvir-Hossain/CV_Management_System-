@@ -7,7 +7,7 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-final class ProfileAttributeValueRepository extends ServiceEntityRepository
+class ProfileAttributeValueRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
