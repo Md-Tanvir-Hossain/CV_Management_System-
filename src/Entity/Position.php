@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PositionRepository::class)]
 #[ORM\Table(name: 'position')]
+#[ORM\Index(name: 'IDX_POSITION_SEARCH', columns: ['search_vector'], options: ['using' => 'gin'])]
 class Position
 {
     #[ORM\Id]
@@ -48,6 +49,9 @@ class Position
 
     #[ORM\Column]
     private int $maxProjects = 3;
+
+    #[ORM\Column(type: 'tsvector', nullable: true, insertable: false, updatable: false, columnDefinition: 'TSVECTOR')]
+    private ?string $searchVector = null;
 
     public function __construct()
     {

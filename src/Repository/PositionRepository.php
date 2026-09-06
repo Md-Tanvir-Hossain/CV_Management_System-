@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Position;
+use App\Entity\CV;
+use App\Enum\CvStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -25,5 +27,19 @@ final class PositionRepository extends ServiceEntityRepository
         }
 
         return $builder->getQuery()->getResult();
+    }
+
+    /** @return list<Position> */
+    public function findLatest(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('position')->orderBy('position.updatedAt', 'DESC')->addOrderBy('position.title', 'ASC')->setMaxResults($limit)->getQuery()->getResult();
+    }
+
+    /** @return list<Position> */
+    public function findMostPopular(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('position')
+            ->leftJoin(CV::class, 'cv', 'WITH', 'cv.position = position AND cv.status = :published')->setParameter('published', CvStatus::Published)
+            ->groupBy('position.id')->orderBy('COUNT(cv.id)', 'DESC')->addOrderBy('position.title', 'ASC')->setMaxResults($limit)->getQuery()->getResult();
     }
 }

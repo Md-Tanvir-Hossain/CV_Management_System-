@@ -1,5 +1,9 @@
 doctrine:
     dbal:
+        types:
+            tsvector: App\Doctrine\Type\TsVectorType
+        mapping_types:
+            tsvector: tsvector
         url: '%env(resolve:DATABASE_URL)%'
 
         # IMPORTANT: You MUST configure your server version,

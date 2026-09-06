@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ position.title }} Discussion · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-4"><div><p class="text-uppercase small fw-semibold text-primary mb-1">Position discussion</p><h1 class="h2 mb-1">{{ position.title }}</h1><p class="text-secondary mb-0">{{ position.shortDescription }}</p></div><a class="btn btn-outline-secondary" href="{{ path('app_position_index') }}">Back to positions</a></div>
+    {% for message in app.flashes('warning') %}<div class="alert alert-warning">{{ message }}</div>{% endfor %}
+    <section class="border rounded bg-white mb-4"><div class="p-3 border-bottom"><h2 class="h5 mb-0">Discussion</h2></div><div class="p-3" data-discussion-list data-last-id="{{ posts|last.id ?? 0 }}">{% for post in posts %}<article class="border-bottom py-3" data-post-id="{{ post.id }}"><div class="small text-secondary mb-1"><a href="{{ post.authorUrl }}">{{ post.author }}</a> · <time>{{ post.createdAt|date('Y-m-d H:i') }}</time></div><div>{{ post.content|raw }}</div></article>{% else %}<p class="text-secondary mb-0" data-discussion-empty>No posts yet.</p>{% endfor %}</div></section>
+    <form method="post" class="border rounded bg-white p-3"><input type="hidden" name="_token" value="{{ csrf_token('discussion-' ~ position.id) }}"><label class="form-label" for="discussion-content">Add a post</label><textarea class="form-control mb-3" id="discussion-content" name="content" rows="4" placeholder="Markdown is supported" required></textarea><button class="btn btn-primary" type="submit">Post</button></form>
+</main>
+<script>
+    const discussionList = document.querySelector('[data-discussion-list]');
+    const appendPosts = (posts) => { posts.forEach((post) => { const article = document.createElement('article'); article.className = 'border-bottom py-3'; article.dataset.postId = post.id; article.innerHTML = `<div class="small text-secondary mb-1"><a href="${post.authorUrl}">${post.author}</a> · <time>${new Date(post.createdAt).toLocaleString()}</time></div><div>${post.content}</div>`; document.querySelector('[data-discussion-empty]')?.remove(); discussionList.append(article); discussionList.dataset.lastId = post.id; }); };
+    setInterval(async () => { const response = await fetch('{{ path('app_position_discussion_updates', {id: position.id}) }}?since=${discussionList.dataset.lastId}`); if (response.ok) appendPosts(await response.json()); }, 3500);
+</script>
+{% endblock %}

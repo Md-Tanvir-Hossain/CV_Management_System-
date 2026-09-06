@@ -34,15 +34,15 @@
                 {% else %}<tr><td colspan="4" class="text-center text-secondary py-4">No custom attributes selected.</td></tr>{% endfor %}
                 </tbody></table></div>
             </div>
-            <div class="col-lg-4"><div class="border rounded bg-white p-3"><h2 class="h5">Add an attribute</h2><form method="post" action="{{ path('app_profile_attribute_add') }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute') }}"><label class="form-label" for="profile-attribute-select">Library attribute</label><select class="form-select mb-3" id="profile-attribute-select" name="attribute_id" required><option value="">Choose one</option>{% for attribute in availableAttributes %}<option value="{{ attribute.id }}">{{ attribute.name }} · {{ attribute.category.value|title }}</option>{% endfor %}</select><button class="btn btn-primary" type="submit">Add to profile</button></form></div></div>
+            <div class="col-lg-4"><div class="border rounded bg-white p-3"><h2 class="h5">Add an attribute</h2><form method="post" action="{{ path('app_profile_attribute_add') }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute') }}"><label class="form-label" for="profile-attribute-search">Search attributes</label><input class="form-control mb-2" id="profile-attribute-search" type="search" placeholder="Starts with"><label class="form-label" for="profile-attribute-select">Library attribute</label><select class="form-select mb-3" id="profile-attribute-select" name="attribute_id" required><option value="">Choose one</option>{% for attribute in availableAttributes %}<option value="{{ attribute.id }}" data-attribute-name="{{ attribute.name|lower }}">{{ attribute.name }} · {{ attribute.category.value|title }}</option>{% endfor %}</select><button class="btn btn-primary" type="submit">Add to profile</button></form></div></div>
         </div>
     {% elseif activeTab == 'projects' %}
         <div class="d-flex justify-content-between align-items-center mb-3"><p class="text-secondary mb-0">Use Markdown in descriptions and comma-separated technology tags.</p><a class="btn btn-primary" href="{{ path('app_project_new') }}">Add project</a></div>
         <form method="post" id="project-actions"><div class="d-flex align-items-center gap-2 mb-2" data-project-toolbar hidden><span class="small text-secondary" data-project-count>0 selected</span><button class="btn btn-sm btn-outline-secondary" type="button" data-project-edit disabled>Edit selected</button><button class="btn btn-sm btn-outline-danger" type="submit" data-project-delete disabled>Delete selected</button></div>
         <div class="table-responsive border rounded bg-white"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-3"></th><th>Name</th><th>Period</th><th>Tags</th></tr></thead><tbody>{% for project in projects %}<tr><td class="ps-3"><input class="form-check-input" type="checkbox" data-project-id="{{ project.id }}" data-project-version="{{ project.version }}" aria-label="Select {{ project.name }}"></td><th>{{ project.name }}</th><td>{{ project.periodStart ? project.periodStart|date('Y-m-d') : '—' }} – {{ project.periodEnd ? project.periodEnd|date('Y-m-d') : '—' }}</td><td>{% for tag in project.tags %}<span class="badge text-bg-light me-1">{{ tag }}</span>{% endfor %}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No projects yet.</td></tr>{% endfor %}</tbody></table></div></form>
     {% else %}
-        <p class="text-secondary">Your generated CVs will appear here. CV creation and generation are implemented in M5.</p>
-        <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Status</th><th>Updated</th></tr></thead><tbody><tr><td colspan="3" class="text-center text-secondary py-5">No CVs created yet.</td></tr></tbody></table></div>
+        <div class="border rounded bg-white p-3 mb-4"><h2 class="h5">Create a CV</h2><form class="row g-2 align-items-end" method="post" action="{{ path('app_cv_new', {id: accessiblePositions|first ? accessiblePositions|first.id : 0}) }}" data-cv-create-form><div class="col-md-8"><label class="form-label" for="cv-position">Accessible position</label><select class="form-select" id="cv-position" required data-cv-position>{% for position in accessiblePositions %}<option value="{{ position.id }}" data-csrf-token="{{ csrf_token('cv-new-' ~ position.id) }}">{{ position.title }}{% if position.company %} · {{ position.company }}{% endif %}</option>{% else %}<option value="">No accessible positions</option>{% endfor %}</select></div><div class="col-md-auto"><input type="hidden" name="_token" value="{{ accessiblePositions|first ? csrf_token('cv-new-' ~ accessiblePositions|first.id) : '' }}" data-cv-token><button class="btn btn-primary" type="submit"{% if accessiblePositions is empty %} disabled{% endif %}>Generate CV</button></div></form></div>
+        <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Status</th><th>Likes</th><th>Updated</th></tr></thead><tbody>{% for cv in cvs %}<tr><th class="ps-3"><a href="{{ path('app_cv_show', {id: cv.id}) }}">{{ cv.position.title }}</a></th><td>{{ cv.status.value|title }}</td><td>{{ cvLikeCounts[cv.id] ?? 0 }}</td><td>{{ cv.updatedAt|date('Y-m-d H:i') }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No CVs created yet.</td></tr>{% endfor %}</tbody></table></div>
     {% endif %}
 </main>
 {% macro value_input(attribute, profileValue) %}
@@ -54,6 +54,7 @@
     {% else %}<input class="form-control" type="{% if attribute.type.value == 'numeric' %}number{% elseif attribute.type.value == 'date' %}date{% else %}text{% endif %}" value="{{ currentValue }}" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}) : '' }}" data-autosave-value>{% endif %}
 {% endmacro %}
 {% block javascripts %}{{ parent() }}<script>
+(() => {
     const autosaveFields = [...document.querySelectorAll('[data-autosave-value][data-autosave-url]')];
     const conflict = document.querySelector('[data-autosave-conflict]');
     const dirty = new Set();
@@ -77,5 +78,26 @@
         const updateProjects = () => { const selected = projectChecks.filter((item) => item.checked); projectToolbar.hidden = selected.length === 0; projectToolbar.querySelector('[data-project-count]').textContent = `${selected.length} selected`; const edit = projectToolbar.querySelector('[data-project-edit]'); const remove = projectToolbar.querySelector('[data-project-delete]'); edit.disabled = remove.disabled = selected.length !== 1; if (selected.length === 1) { edit.onclick = () => window.location.href = `/profile/projects/${selected[0].dataset.projectId}/edit`; remove.formAction = `/profile/projects/${selected[0].dataset.projectId}/delete`; } };
         projectChecks.forEach((item) => item.addEventListener('change', updateProjects));
     }
-</script>{% endblock %}
+    const cvCreateForm = document.querySelector('[data-cv-create-form]');
+    if (cvCreateForm) {
+        const position = cvCreateForm.querySelector('[data-cv-position]');
+        const token = cvCreateForm.querySelector('[data-cv-token]');
+        position.addEventListener('change', () => { cvCreateForm.action = `/cvs/positions/${position.value}/new`; token.value = position.selectedOptions[0].dataset.csrfToken; });
+    }
+    const attributeSearch = document.querySelector('#profile-attribute-search');
+    const attributeSelect = document.querySelector('#profile-attribute-select');
+    if (attributeSearch && attributeSelect) {
+        attributeSearch.addEventListener('input', () => {
+            const query = attributeSearch.value.trim().toLowerCase();
+            [...attributeSelect.options].forEach((option, index) => {
+                option.hidden = index > 0 && !option.dataset.attributeName.startsWith(query);
+            });
+            if (attributeSelect.selectedOptions[0]?.hidden) {
+                attributeSelect.value = '';
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}
 {% endblock %}

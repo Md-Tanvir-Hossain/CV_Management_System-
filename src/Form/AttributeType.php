@@ -19,7 +19,7 @@ final class AttributeType extends AbstractType
         $builder
             ->add('name', TextType::class)
             ->add('category', ChoiceType::class, ['choices' => $this->enumChoices(AttributeCategory::cases())])
-            ->add('description', TextareaType::class, ['required' => false, 'attr' => ['rows' => 3]])
+            ->add('description', TextareaType::class, ['required' => false, 'empty_data' => '', 'attr' => ['rows' => 3]])
             ->add('type', ChoiceType::class, ['choices' => $this->enumChoices(AttributeDataType::cases())])
             ->add('optionsText', TextareaType::class, [
                 'mapped' => false,

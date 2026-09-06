@@ -38,6 +38,7 @@
     </form>
 </main>
 <script>
+(() => {
     const toolbar = document.querySelector('[data-selection-toolbar]');
     const count = document.querySelector('[data-selection-count]');
     const editButton = document.querySelector('[data-edit-selected]');
@@ -55,5 +56,6 @@
         }
     };
     checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelection));
+})();
 </script>
 {% endblock %}

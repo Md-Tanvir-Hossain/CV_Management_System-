@@ -128,8 +128,9 @@ final class PositionController extends AbstractController
                     continue;
                 }
                 $ruleData = is_array($submittedRules[$attributeId] ?? null) ? $submittedRules[$attributeId] : [];
-                if (($ruleData['enabled'] ?? '') === '1') {
-                    $operator = AccessRuleOperator::tryFrom((string) ($ruleData['operator'] ?? ''));
+                $operatorValue = trim((string) ($ruleData['operator'] ?? ''));
+                if ($operatorValue !== '') {
+                    $operator = AccessRuleOperator::tryFrom($operatorValue);
                     if (!$operator || !in_array($operator, $evaluator->allowedOperators($attribute->getType()), true)) {
                         $this->addFlash('warning', 'One access rule uses an invalid operator for its attribute type.');
                         return $this->render('position/form.html.twig', $this->formViewData($position, $attributes, $selectedIds, $submittedRules, $evaluator));
@@ -147,6 +148,7 @@ final class PositionController extends AbstractController
                 }
                 $entityManager->flush();
             }
+            $entityManager->persist($position);
             foreach ($attributes as $attribute) {
                 if (in_array($attribute->getId(), $selectedIds, true)) {
                     $entityManager->persist(new PositionAttribute($position, $attribute));

@@ -1,3 +1,17 @@
 body {
     min-height: 100vh;
 }
+
+body.bg-dark header,
+body.bg-dark footer {
+    background-color: var(--bs-dark) !important;
+}
+
+.value-missing {
+    color: var(--bs-danger);
+}
+
+.value-missing .form-control,
+.value-missing .form-select {
+    color: var(--bs-danger);
+}

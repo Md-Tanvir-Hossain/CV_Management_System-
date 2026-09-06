@@ -29,6 +29,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $blocked = false;
 
+    #[ORM\Column(length: 10)]
+    private string $locale = 'en';
+
+    #[ORM\Column(length: 10)]
+    private string $theme = 'light';
+
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\Version]
     private int $version = 1;
@@ -52,6 +58,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void {}
     public function isBlocked(): bool { return $this->blocked; }
     public function setBlocked(bool $blocked): static { $this->blocked = $blocked; return $this; }
+    public function getLocale(): string { return $this->locale; }
+    public function setLocale(string $locale): static { $this->locale = $locale; return $this; }
+    public function getTheme(): string { return $this->theme; }
+    public function setTheme(string $theme): static { $this->theme = $theme; return $this; }
     public function getVersion(): int { return $this->version; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 }

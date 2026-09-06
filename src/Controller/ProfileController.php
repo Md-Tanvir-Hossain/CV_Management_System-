@@ -7,8 +7,13 @@ use App\Entity\ProfileAttributeValue;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Repository\AttributeRepository;
+use App\Repository\CvRepository;
+use App\Repository\CvLikeRepository;
 use App\Repository\ProfileAttributeValueRepository;
+use App\Repository\PositionRepository;
 use App\Repository\ProjectRepository;
+use App\Service\PositionAccessEvaluator;
+use App\Service\CvSearchIndexer;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,6 +32,10 @@ final class ProfileController extends AbstractController
         AttributeRepository $attributeRepository,
         ProfileAttributeValueRepository $valueRepository,
         ProjectRepository $projectRepository,
+        CvRepository $cvRepository,
+        CvLikeRepository $likeRepository,
+        PositionRepository $positionRepository,
+        PositionAccessEvaluator $accessEvaluator,
         EntityManagerInterface $entityManager,
     ): Response {
         $user = $this->profileOwner();
@@ -49,6 +58,8 @@ final class ProfileController extends AbstractController
         }
         $selectedIds = array_map(static fn (ProfileAttributeValue $value): ?int => $value->getAttribute()->getId(), $values);
 
+        $cvs = $cvRepository->findForCandidate($user);
+
         return $this->render('profile/index.html.twig', [
             'builtInAttributes' => $builtInAttributes,
             'selectedAttributes' => array_values(array_filter($values, static fn (ProfileAttributeValue $value): bool => !$value->getAttribute()->isBuiltin())),
@@ -56,6 +67,9 @@ final class ProfileController extends AbstractController
             'valueByAttribute' => $valueByAttribute,
             'projects' => $projectRepository->findForOwner($user),
             'knownTags' => $projectRepository->findDistinctTags(),
+            'cvs' => $cvs,
+            'cvLikeCounts' => $likeRepository->countsForCvs($cvs),
+            'accessiblePositions' => $accessEvaluator->filterAccessible($user, $positionRepository->findForLibrary()),
         ]);
     }
 
@@ -99,7 +113,7 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/{id}/autosave', name: 'app_profile_attribute_autosave', methods: ['PATCH'])]
-    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, EntityManagerInterface $entityManager): JsonResponse
+    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $this->profileOwner();
         $profileValue = $valueRepository->findOneBy(['id' => $id, 'user' => $user]);
@@ -122,6 +136,7 @@ final class ProfileController extends AbstractController
         } catch (OptimisticLockException) {
             return new JsonResponse(['message' => 'This profile changed elsewhere. Reload before saving.'], Response::HTTP_CONFLICT);
         }
+        $indexer->refreshCandidate($user);
 
         return new JsonResponse(['version' => $profileValue->getVersion(), 'saved' => true]);
     }

@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+{% block title %}Search · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5"><h1 class="h2 mb-4">Search results</h1><form class="row g-2 mb-4" method="get"><div class="col-md-10"><label class="visually-hidden" for="search-query">Search</label><input class="form-control" id="search-query" name="q" value="{{ query }}" placeholder="Search positions and CVs"></div><div class="col-md-2 d-grid"><button class="btn btn-primary" type="submit">Search</button></div></form>
+{% if query and positions %}<h2 class="h5">Positions</h2><div class="table-responsive border rounded bg-white mb-4"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Title</th><th>Company</th><th>Visibility</th></tr></thead><tbody>{% for position in positions %}<tr><th class="ps-3">{{ position.title }}</th><td>{{ position.company ?: '—' }}</td><td>{{ position.isPublic ? 'Public' : 'Restricted' }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% if query and cvs %}<h2 class="h5">Published CVs</h2><div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Candidate</th><th>Likes</th><th>View</th></tr></thead><tbody>{% for cv in cvs %}<tr><th class="ps-3">{{ cv.position.title }}</th><td>{{ cv.candidate.email }}</td><td>{{ likeCounts[cv.id] ?? 0 }}</td><td><a href="{{ path('app_cv_show', {id: cv.id}) }}">Open CV</a></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% if query and not positions and not cvs %}<p class="text-secondary">No results found.</p>{% endif %}</main>
+{% endblock %}
