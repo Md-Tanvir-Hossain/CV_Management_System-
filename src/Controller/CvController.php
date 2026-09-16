@@ -12,6 +12,7 @@ use App\Repository\CvRepository;
 use App\Repository\CvLikeRepository;
 use App\Repository\PositionAttributeRepository;
 use App\Repository\ProfileAttributeValueRepository;
+use App\Repository\UserRepository;
 use App\Service\CvProjection;
 use App\Service\CvSearchIndexer;
 use App\Service\PositionAccessEvaluator;
@@ -29,9 +30,9 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 final class CvController extends AbstractController
 {
     #[Route('/positions/{id}/new', name: 'app_cv_new', methods: ['POST'])]
-    public function new(Position $position, Request $request, PositionAccessEvaluator $evaluator, CvRepository $cvRepository, EntityManagerInterface $entityManager): Response
+    public function new(Position $position, Request $request, PositionAccessEvaluator $evaluator, CvRepository $cvRepository, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
-        $candidate = $this->candidateOwner();
+        $candidate = $this->candidateOwner($request, $userRepository);
         if (!$this->isCsrfTokenValid('cv-new-'.$position->getId(), $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Invalid form token.');
         }
@@ -162,18 +163,26 @@ final class CvController extends AbstractController
         return $this->redirectToRoute('app_profile', ['tab' => 'cvs']);
     }
 
-    private function candidateOwner(): User
+    private function candidateOwner(?Request $request = null, ?UserRepository $userRepository = null): User
     {
         $user = $this->getUser();
         if (!$user instanceof User || (!$this->isGranted('ROLE_CANDIDATE') && !$this->isGranted('ROLE_ADMIN'))) {
             throw new AccessDeniedException('Candidate access is required.');
+        }
+        $targetId = $request?->query->getInt('user', 0);
+        if ($this->isGranted('ROLE_ADMIN') && $targetId > 0 && $userRepository) {
+            $target = $userRepository->find($targetId);
+            if (!$target instanceof User) {
+                throw $this->createNotFoundException('User not found.');
+            }
+            return $target;
         }
         return $user;
     }
 
     private function isOwner(CV $cv): bool
     {
-        return $this->getUser() === $cv->getCandidate() && ($this->isGranted('ROLE_CANDIDATE') || $this->isGranted('ROLE_ADMIN'));
+        return $this->isGranted('ROLE_ADMIN') || ($this->getUser() === $cv->getCandidate() && $this->isGranted('ROLE_CANDIDATE'));
     }
 
     private function assertOwner(CV $cv): void

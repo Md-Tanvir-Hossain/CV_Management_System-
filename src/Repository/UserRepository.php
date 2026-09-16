@@ -12,4 +12,13 @@ final class UserRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, User::class);
     }
+
+    /** @return list<User> */
+    public function findForAdmin(): array
+    {
+        return $this->createQueryBuilder('user')
+            ->orderBy('user.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

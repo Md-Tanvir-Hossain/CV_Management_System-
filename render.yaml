@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: cv-management-system
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    preDeployCommand: php bin/console doctrine:migrations:migrate --no-interaction
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        sync: false          # set manually in Render dashboard
+      - key: DATABASE_URL
+        sync: false          # set manually — your Supabase session-pooler string

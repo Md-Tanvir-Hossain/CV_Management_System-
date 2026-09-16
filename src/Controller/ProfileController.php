@@ -12,6 +12,7 @@ use App\Repository\CvLikeRepository;
 use App\Repository\ProfileAttributeValueRepository;
 use App\Repository\PositionRepository;
 use App\Repository\ProjectRepository;
+use App\Repository\UserRepository;
 use App\Service\PositionAccessEvaluator;
 use App\Service\CvSearchIndexer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,8 +38,10 @@ final class ProfileController extends AbstractController
         PositionRepository $positionRepository,
         PositionAccessEvaluator $accessEvaluator,
         EntityManagerInterface $entityManager,
+        Request $request,
+        UserRepository $userRepository,
     ): Response {
-        $user = $this->profileOwner();
+        $user = $this->profileOwner($request, $userRepository);
         $values = $valueRepository->findForUser($user);
         $valueByAttribute = [];
         foreach ($values as $profileValue) {
@@ -74,9 +77,9 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/add', name: 'app_profile_attribute_add', methods: ['POST'])]
-    public function addAttribute(Request $request, AttributeRepository $attributeRepository, ProfileAttributeValueRepository $valueRepository, EntityManagerInterface $entityManager): Response
+    public function addAttribute(Request $request, AttributeRepository $attributeRepository, ProfileAttributeValueRepository $valueRepository, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
-        $user = $this->profileOwner();
+        $user = $this->profileOwner($request, $userRepository);
         if (!$this->isCsrfTokenValid('profile-attribute', $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Invalid form token.');
         }
@@ -96,9 +99,9 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/{id}/remove', name: 'app_profile_attribute_remove', methods: ['POST'])]
-    public function removeAttribute(ProfileAttributeValue $profileValue, Request $request, EntityManagerInterface $entityManager): Response
+    public function removeAttribute(ProfileAttributeValue $profileValue, Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
-        $user = $this->profileOwner();
+        $user = $this->profileOwner($request, $userRepository);
         if ($profileValue->getUser() !== $user || $profileValue->getAttribute()->isBuiltin()) {
             throw new AccessDeniedException('This profile value cannot be removed.');
         }
@@ -113,9 +116,9 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/{id}/autosave', name: 'app_profile_attribute_autosave', methods: ['PATCH'])]
-    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager): JsonResponse
+    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager, UserRepository $userRepository): JsonResponse
     {
-        $user = $this->profileOwner();
+        $user = $this->profileOwner($request, $userRepository);
         $profileValue = $valueRepository->findOneBy(['id' => $id, 'user' => $user]);
         if (!$profileValue instanceof ProfileAttributeValue) {
             return new JsonResponse(['message' => 'Profile value not found.'], Response::HTTP_NOT_FOUND);
@@ -142,9 +145,9 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/projects/new', name: 'app_project_new', methods: ['GET', 'POST'])]
-    public function newProject(Request $request, EntityManagerInterface $entityManager): Response
+    public function newProject(Request $request, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
-        $user = $this->profileOwner();
+        $user = $this->profileOwner($request, $userRepository);
         $project = new Project($user);
         if ($request->isMethod('POST')) {
             $this->checkProjectToken($request);
@@ -193,11 +196,20 @@ final class ProfileController extends AbstractController
         return $this->redirectToRoute('app_profile', ['tab' => 'projects']);
     }
 
-    private function profileOwner(): User
+    private function profileOwner(?Request $request = null, ?UserRepository $userRepository = null): User
     {
         $user = $this->getUser();
         if (!$user instanceof User || (!$this->isGranted('ROLE_CANDIDATE') && !$this->isGranted('ROLE_ADMIN'))) {
             throw new AccessDeniedException('Candidate access is required.');
+        }
+
+        $targetId = $request?->query->getInt('user', 0);
+        if ($this->isGranted('ROLE_ADMIN') && $targetId > 0 && $userRepository) {
+            $target = $userRepository->find($targetId);
+            if (!$target instanceof User) {
+                throw $this->createNotFoundException('User not found.');
+            }
+            return $target;
         }
 
         return $user;

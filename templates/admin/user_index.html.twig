@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+{% block title %}User Management · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><p class="text-uppercase small fw-semibold text-primary mb-1">M11 · Administration</p><h1 class="h2 mb-0">User management</h1></div><a class="btn btn-primary" href="{{ path('app_admin_user_new') }}">Create admin account</a></div>
+    <form method="post" id="admin-user-actions">
+        <input type="hidden" name="_token" data-admin-user-token>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2" data-admin-user-toolbar hidden>
+            <span class="small text-secondary" data-admin-user-count>0 selected</span>
+            <button class="btn btn-sm btn-outline-secondary" type="submit" data-admin-user-block disabled>Block/unblock</button>
+            <select class="form-select form-select-sm w-auto" name="role" data-admin-user-role disabled><option value="">Choose role</option>{% for role in ['ROLE_CANDIDATE', 'ROLE_RECRUITER', 'ROLE_ADMIN'] %}<option value="{{ role }}">{{ role }}</option>{% endfor %}</select>
+            <button class="btn btn-sm btn-outline-primary" type="submit" name="role_action" value="add" data-admin-user-add disabled>Assign role</button>
+            <button class="btn btn-sm btn-outline-secondary" type="submit" name="role_action" value="remove" data-admin-user-remove disabled>Remove role</button>
+            <button class="btn btn-sm btn-outline-danger" type="submit" data-admin-user-delete disabled>Delete</button>
+        </div>
+        <div class="table-responsive border rounded bg-white"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-3"><span class="visually-hidden">Select</span></th><th>Email</th><th>Roles</th><th>Blocked</th><th>Created</th></tr></thead><tbody>
+        {% for user in users %}<tr><td class="ps-3"><input class="form-check-input" type="checkbox" data-admin-user-id="{{ user.id }}" data-block-token="{{ csrf_token('admin-user-block-' ~ user.id) }}" data-role-token="{{ csrf_token('admin-user-roles-' ~ user.id) }}" data-delete-token="{{ csrf_token('admin-user-delete-' ~ user.id) }}" aria-label="Select {{ user.email }}"></td><th><a href="{{ path('app_profile', {user: user.id}) }}">{{ user.email }}</a></th><td>{% for role in user.roles|filter(role => role != 'ROLE_USER') %}<span class="badge text-bg-light me-1">{{ role }}</span>{% else %}<span class="text-secondary">No assigned role</span>{% endfor %}</td><td>{% if user.blocked %}<span class="badge text-bg-danger">Blocked</span>{% else %}<span class="badge text-bg-success">Active</span>{% endif %}</td><td>{{ user.createdAt|date('Y-m-d H:i') }}</td></tr>{% else %}<tr><td colspan="5" class="text-center text-secondary py-5">No users found.</td></tr>{% endfor %}
+        </tbody></table></div>
+    </form>
+</main>
+{% block javascripts %}{{ parent() }}<script>
+(() => { const toolbar = document.querySelector('[data-admin-user-toolbar]'); const count = document.querySelector('[data-admin-user-count]'); const form = document.querySelector('#admin-user-actions'); const token = form.querySelector('[data-admin-user-token]'); const block = document.querySelector('[data-admin-user-block]'); const role = document.querySelector('[data-admin-user-role]'); const add = document.querySelector('[data-admin-user-add]'); const remove = document.querySelector('[data-admin-user-remove]'); const deletion = document.querySelector('[data-admin-user-delete]'); const checks = [...document.querySelectorAll('[data-admin-user-id]')]; const update = () => { const selected = checks.filter((item) => item.checked); toolbar.hidden = selected.length === 0; count.textContent = `${selected.length} selected`; block.disabled = role.disabled = add.disabled = remove.disabled = deletion.disabled = selected.length !== 1; if (selected.length === 1) { const user = selected[0]; const roleAction = () => { form.action = `/admin/users/${user.dataset.adminUserId}/roles`; token.value = user.dataset.roleToken; }; form.action = `/admin/users/${user.dataset.adminUserId}/toggle-blocked`; token.value = user.dataset.blockToken; block.formAction = form.action; add.onclick = remove.onclick = roleAction; deletion.formAction = `/admin/users/${user.dataset.adminUserId}/delete`; deletion.onclick = () => window.confirm('Delete this user and all cascaded profile, project, CV, like, and discussion data?'); } }; checks.forEach((item) => item.addEventListener('change', update)); })();
+</script>{% endblock %}
+{% endblock %}

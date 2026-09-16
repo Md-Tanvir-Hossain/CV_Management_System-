@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 {% set activeTab = app.request.query.get('tab', 'me') %}
+{% set ownerQuery = is_granted('ROLE_ADMIN') and app.request.query.get('user') ? {user: app.request.query.get('user')} : {} %}
 {% block title %}My Profile · CV Management{% endblock %}
 {% block body %}
 <main class="container py-5">
@@ -12,7 +13,7 @@
 
     <ul class="nav nav-tabs mb-4">
         {% for tab, label in {'me': 'Me', 'info': 'Info', 'projects': 'Projects', 'cvs': 'CVs'} %}
-            <li class="nav-item"><a class="nav-link{% if activeTab == tab %} active{% endif %}" href="{{ path('app_profile', {tab: tab}) }}">{{ label }}</a></li>
+            <li class="nav-item"><a class="nav-link{% if activeTab == tab %} active{% endif %}" href="{{ path('app_profile', {tab: tab}|merge(ownerQuery)) }}">{{ label }}</a></li>
         {% endfor %}
     </ul>
 
@@ -21,7 +22,7 @@
         <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Field</th><th>Value</th><th>Type</th></tr></thead><tbody>
         {% for attribute in builtInAttributes %}
             {% set profileValue = valueByAttribute[attribute.id] ?? null %}
-            <tr><th class="ps-3">{{ attribute.name }}</th><td>{{ _self.value_input(attribute, profileValue) }}</td><td><span class="badge text-bg-light">{{ attribute.type.value }}</span></td></tr>
+            <tr><th class="ps-3">{{ attribute.name }}</th><td>{{ _self.value_input(attribute, profileValue, ownerQuery) }}</td><td><span class="badge text-bg-light">{{ attribute.type.value }}</span></td></tr>
         {% endfor %}
         </tbody></table></div>
     {% elseif activeTab == 'info' %}
@@ -30,28 +31,28 @@
                 <p class="text-secondary">Select reusable attributes from the shared library, then fill them here.</p>
                 <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Field</th><th>Value</th><th>Type</th><th class="text-end pe-3"><span class="visually-hidden">Select</span></th></tr></thead><tbody>
                 {% for profileValue in selectedAttributes %}
-                    <tr><th class="ps-3">{{ profileValue.attribute.name }}</th><td>{{ _self.value_input(profileValue.attribute, profileValue) }}</td><td><span class="badge text-bg-light">{{ profileValue.attribute.type.value }}</span></td><td class="text-end pe-3"><form method="post" action="{{ path('app_profile_attribute_remove', {id: profileValue.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute-remove-' ~ profileValue.id) }}"><button class="btn btn-sm btn-outline-secondary" type="submit">Remove</button></form></td></tr>
+                    <tr><th class="ps-3">{{ profileValue.attribute.name }}</th><td>{{ _self.value_input(profileValue.attribute, profileValue, ownerQuery) }}</td><td><span class="badge text-bg-light">{{ profileValue.attribute.type.value }}</span></td><td class="text-end pe-3"><form method="post" action="{{ path('app_profile_attribute_remove', {id: profileValue.id}|merge(ownerQuery)) }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute-remove-' ~ profileValue.id) }}"><button class="btn btn-sm btn-outline-secondary" type="submit">Remove</button></form></td></tr>
                 {% else %}<tr><td colspan="4" class="text-center text-secondary py-4">No custom attributes selected.</td></tr>{% endfor %}
                 </tbody></table></div>
             </div>
-            <div class="col-lg-4"><div class="border rounded bg-white p-3"><h2 class="h5">Add an attribute</h2><form method="post" action="{{ path('app_profile_attribute_add') }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute') }}"><label class="form-label" for="profile-attribute-search">Search attributes</label><input class="form-control mb-2" id="profile-attribute-search" type="search" placeholder="Starts with"><label class="form-label" for="profile-attribute-select">Library attribute</label><select class="form-select mb-3" id="profile-attribute-select" name="attribute_id" required><option value="">Choose one</option>{% for attribute in availableAttributes %}<option value="{{ attribute.id }}" data-attribute-name="{{ attribute.name|lower }}">{{ attribute.name }} · {{ attribute.category.value|title }}</option>{% endfor %}</select><button class="btn btn-primary" type="submit">Add to profile</button></form></div></div>
+            <div class="col-lg-4"><div class="border rounded bg-white p-3"><h2 class="h5">Add an attribute</h2><form method="post" action="{{ path('app_profile_attribute_add', ownerQuery) }}"><input type="hidden" name="_token" value="{{ csrf_token('profile-attribute') }}"><label class="form-label" for="profile-attribute-search">Search attributes</label><input class="form-control mb-2" id="profile-attribute-search" type="search" placeholder="Starts with"><label class="form-label" for="profile-attribute-select">Library attribute</label><select class="form-select mb-3" id="profile-attribute-select" name="attribute_id" required><option value="">Choose one</option>{% for attribute in availableAttributes %}<option value="{{ attribute.id }}" data-attribute-name="{{ attribute.name|lower }}">{{ attribute.name }} · {{ attribute.category.value|title }}</option>{% endfor %}</select><button class="btn btn-primary" type="submit">Add to profile</button></form></div></div>
         </div>
     {% elseif activeTab == 'projects' %}
-        <div class="d-flex justify-content-between align-items-center mb-3"><p class="text-secondary mb-0">Use Markdown in descriptions and comma-separated technology tags.</p><a class="btn btn-primary" href="{{ path('app_project_new') }}">Add project</a></div>
+        <div class="d-flex justify-content-between align-items-center mb-3"><p class="text-secondary mb-0">Use Markdown in descriptions and comma-separated technology tags.</p><a class="btn btn-primary" href="{{ path('app_project_new', ownerQuery) }}">Add project</a></div>
         <form method="post" id="project-actions"><div class="d-flex align-items-center gap-2 mb-2" data-project-toolbar hidden><span class="small text-secondary" data-project-count>0 selected</span><button class="btn btn-sm btn-outline-secondary" type="button" data-project-edit disabled>Edit selected</button><button class="btn btn-sm btn-outline-danger" type="submit" data-project-delete disabled>Delete selected</button></div>
         <div class="table-responsive border rounded bg-white"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-3"></th><th>Name</th><th>Period</th><th>Tags</th></tr></thead><tbody>{% for project in projects %}<tr><td class="ps-3"><input class="form-check-input" type="checkbox" data-project-id="{{ project.id }}" data-project-version="{{ project.version }}" aria-label="Select {{ project.name }}"></td><th>{{ project.name }}</th><td>{{ project.periodStart ? project.periodStart|date('Y-m-d') : '—' }} – {{ project.periodEnd ? project.periodEnd|date('Y-m-d') : '—' }}</td><td>{% for tag in project.tags %}<span class="badge text-bg-light me-1">{{ tag }}</span>{% endfor %}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No projects yet.</td></tr>{% endfor %}</tbody></table></div></form>
     {% else %}
-        <div class="border rounded bg-white p-3 mb-4"><h2 class="h5">Create a CV</h2><form class="row g-2 align-items-end" method="post" action="{{ path('app_cv_new', {id: accessiblePositions|first ? accessiblePositions|first.id : 0}) }}" data-cv-create-form><div class="col-md-8"><label class="form-label" for="cv-position">Accessible position</label><select class="form-select" id="cv-position" required data-cv-position>{% for position in accessiblePositions %}<option value="{{ position.id }}" data-csrf-token="{{ csrf_token('cv-new-' ~ position.id) }}">{{ position.title }}{% if position.company %} · {{ position.company }}{% endif %}</option>{% else %}<option value="">No accessible positions</option>{% endfor %}</select></div><div class="col-md-auto"><input type="hidden" name="_token" value="{{ accessiblePositions|first ? csrf_token('cv-new-' ~ accessiblePositions|first.id) : '' }}" data-cv-token><button class="btn btn-primary" type="submit"{% if accessiblePositions is empty %} disabled{% endif %}>Generate CV</button></div></form></div>
+        <div class="border rounded bg-white p-3 mb-4"><h2 class="h5">Create a CV</h2><form class="row g-2 align-items-end" method="post" action="{{ path('app_cv_new', {id: accessiblePositions|first ? accessiblePositions|first.id : 0}|merge(ownerQuery)) }}" data-cv-create-form data-owner-query="{{ app.request.query.get('user') ? '?user=' ~ app.request.query.get('user') : '' }}"><div class="col-md-8"><label class="form-label" for="cv-position">Accessible position</label><select class="form-select" id="cv-position" required data-cv-position>{% for position in accessiblePositions %}<option value="{{ position.id }}" data-csrf-token="{{ csrf_token('cv-new-' ~ position.id) }}">{{ position.title }}{% if position.company %} · {{ position.company }}{% endif %}</option>{% else %}<option value="">No accessible positions</option>{% endfor %}</select></div><div class="col-md-auto"><input type="hidden" name="_token" value="{{ accessiblePositions|first ? csrf_token('cv-new-' ~ accessiblePositions|first.id) : '' }}" data-cv-token><button class="btn btn-primary" type="submit"{% if accessiblePositions is empty %} disabled{% endif %}>Generate CV</button></div></form></div>
         <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Status</th><th>Likes</th><th>Updated</th></tr></thead><tbody>{% for cv in cvs %}<tr><th class="ps-3"><a href="{{ path('app_cv_show', {id: cv.id}) }}">{{ cv.position.title }}</a></th><td>{{ cv.status.value|title }}</td><td>{{ cvLikeCounts[cv.id] ?? 0 }}</td><td>{{ cv.updatedAt|date('Y-m-d H:i') }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No CVs created yet.</td></tr>{% endfor %}</tbody></table></div>
     {% endif %}
 </main>
-{% macro value_input(attribute, profileValue) %}
+{% macro value_input(attribute, profileValue, ownerQuery) %}
     {% set currentValue = profileValue ? profileValue.value : '' %}
     {% if profileValue %}<input type="hidden" data-profile-version="{{ profileValue.version }}">{% endif %}
-    {% if attribute.type.value == 'text' %}<textarea class="form-control" rows="2" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}) : '' }}" data-autosave-value>{{ currentValue }}</textarea>
-    {% elseif attribute.type.value == 'boolean' %}<input class="form-check-input" type="checkbox" value="true"{% if currentValue == 'true' %} checked{% endif %} data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}) : '' }}" data-autosave-value>
-    {% elseif attribute.type.value == 'dropdown' %}<select class="form-select" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}) : '' }}" data-autosave-value><option value="">Choose one</option>{% for option in attribute.options %}<option{% if currentValue == option %} selected{% endif %}>{{ option }}</option>{% endfor %}</select>
-    {% else %}<input class="form-control" type="{% if attribute.type.value == 'numeric' %}number{% elseif attribute.type.value == 'date' %}date{% else %}text{% endif %}" value="{{ currentValue }}" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}) : '' }}" data-autosave-value>{% endif %}
+    {% if attribute.type.value == 'text' %}<textarea class="form-control" rows="2" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}|merge(ownerQuery)) : '' }}" data-autosave-value>{{ currentValue }}</textarea>
+    {% elseif attribute.type.value == 'boolean' %}<input class="form-check-input" type="checkbox" value="true"{% if currentValue == 'true' %} checked{% endif %} data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}|merge(ownerQuery)) : '' }}" data-autosave-value>
+    {% elseif attribute.type.value == 'dropdown' %}<select class="form-select" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}|merge(ownerQuery)) : '' }}" data-autosave-value><option value="">Choose one</option>{% for option in attribute.options %}<option{% if currentValue == option %} selected{% endif %}>{{ option }}</option>{% endfor %}</select>
+    {% else %}<input class="form-control" type="{% if attribute.type.value == 'numeric' %}number{% elseif attribute.type.value == 'date' %}date{% else %}text{% endif %}" value="{{ currentValue }}" data-autosave-url="{{ profileValue ? path('app_profile_attribute_autosave', {id: profileValue.id}|merge(ownerQuery)) : '' }}" data-autosave-value>{% endif %}
 {% endmacro %}
 {% block javascripts %}{{ parent() }}<script>
 (() => {
@@ -82,7 +83,7 @@
     if (cvCreateForm) {
         const position = cvCreateForm.querySelector('[data-cv-position]');
         const token = cvCreateForm.querySelector('[data-cv-token]');
-        position.addEventListener('change', () => { cvCreateForm.action = `/cvs/positions/${position.value}/new`; token.value = position.selectedOptions[0].dataset.csrfToken; });
+        position.addEventListener('change', () => { cvCreateForm.action = `/cvs/positions/${position.value}/new${cvCreateForm.dataset.ownerQuery}`; token.value = position.selectedOptions[0].dataset.csrfToken; });
     }
     const attributeSearch = document.querySelector('#profile-attribute-search');
     const attributeSelect = document.querySelector('#profile-attribute-select');

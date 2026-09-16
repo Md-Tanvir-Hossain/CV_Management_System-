@@ -31,6 +31,7 @@
                     <div class="collapse navbar-collapse" id="main-navigation">
                         <a class="nav-link ms-lg-3" href="{{ path('app_position_index') }}">Positions</a>
                         {% if is_granted('ROLE_RECRUITER') or is_granted('ROLE_ADMIN') %}<a class="nav-link" href="{{ path('app_attribute_index') }}">Attributes</a>{% endif %}
+                            {% if is_granted('ROLE_ADMIN') %}<a class="nav-link" href="{{ path('app_admin_user_index') }}">Users</a>{% endif %}
                             <form class="d-flex mx-lg-auto my-3 my-lg-0" role="search" action="{{ path('app_search') }}" method="get">
                             <label class="visually-hidden" for="global-search">Search</label>
                             <input class="form-control" id="global-search" name="q" type="search" placeholder="Search positions and CVs" aria-label="Search positions and CVs">
@@ -43,7 +44,12 @@
                                 <select class="form-select form-select-sm" id="theme-choice" name="theme" onchange="this.form.submit()"><option value="light" {{ currentTheme == 'light' ? 'selected' }}>Light</option><option value="dark" {{ currentTheme == 'dark' ? 'selected' }}>Dark</option></select>
                             </form>
                             {% if is_granted('ROLE_CANDIDATE') or is_granted('ROLE_ADMIN') %}<a class="btn btn-sm btn-outline-primary" href="{{ path('app_profile') }}">My profile</a>{% endif %}
-                            {% if app.user %}<a class="btn btn-sm btn-primary" href="{{ path('app_logout') }}">Sign out</a>{% else %}<a class="btn btn-sm btn-primary" href="{{ path('app_login') }}">Sign in</a>{% endif %}
+                            {% if app.user %}
+                                <a class="btn btn-sm btn-primary" href="{{ path('app_logout') }}">Sign out</a>
+                            {% else %}
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_admin_user_new') }}">Create Admin</a>
+                                <a class="btn btn-sm btn-primary" href="{{ path('app_login') }}">Sign in</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
