@@ -16,10 +16,14 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
 
+
 # Copy the rest of the app
 COPY . .
 
+
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+RUN php bin/console importmap:install
+RUN php bin/console asset-map:compile
 
 ENV APP_ENV=prod
 ENV SERVER_NAME=:8080
