@@ -1,0 +1,13 @@
+.git
+.gitignore
+var/cache
+var/log
+var/trailer-cache
+vendor
+node_modules
+*.md
+.env.local
+.env.*.local
+docker-compose.yml
+Dockerfile
+.dockerignore
