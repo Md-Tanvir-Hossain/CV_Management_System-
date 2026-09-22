@@ -16,7 +16,7 @@
         <div class="col-md-2 d-grid"><button class="btn btn-outline-primary" type="submit">Filter</button></div>
     </form>
 
-    <form method="post" id="attribute-actions">
+    <form method="post" id="attribute-actions"><input type="hidden" name="_token" data-attribute-token>
         <div class="d-flex align-items-center gap-2 mb-2" data-selection-toolbar hidden>
             <span class="small text-secondary" data-selection-count>0 selected</span>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-edit-selected disabled>Edit selected</button>
@@ -28,7 +28,7 @@
                 <tbody>
                 {% for attribute in attributes %}
                     <tr>
-                        <td class="ps-3"><input class="form-check-input" type="checkbox" name="selected[]" value="{{ attribute.id }}" data-attribute-id="{{ attribute.id }}" aria-label="Select {{ attribute.name }}"></td>
+                        <td class="ps-3"><input class="form-check-input" type="checkbox" name="selected[]" value="{{ attribute.id }}" data-attribute-id="{{ attribute.id }}" data-attribute-delete-token="{{ csrf_token('delete-attribute-' ~ attribute.id) }}" aria-label="Select {{ attribute.name }}"></td>
                         <td class="fw-semibold">{{ attribute.name }}</td><td>{{ attribute.category.value|title }}</td><td><span class="badge text-bg-light">{{ attribute.type.value }}</span></td><td class="text-secondary">{{ attribute.description ?: 'No description' }}</td><td>{% if attribute.isBuiltin %}<span class="badge text-bg-secondary">Yes</span>{% else %}No{% endif %}</td>
                     </tr>
                 {% else %}<tr><td colspan="6" class="text-center text-secondary py-5">No attributes match this filter.</td></tr>{% endfor %}
@@ -53,6 +53,7 @@
         if (selected.length === 1) {
             editButton.onclick = () => window.location.href = `/attributes/${selected[0].value}/edit`;
             deleteButton.formAction = `/attributes/${selected[0].value}/delete`;
+            document.querySelector('[data-attribute-token]').value = selected[0].dataset.attributeDeleteToken;
         }
     };
     checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelection));

@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ position.title }} CVs · CV Management{% endblock %}
+{% block body %}
+<main class="container py-5">
+    <p class="text-uppercase small fw-semibold text-primary mb-1">Published candidate CVs</p>
+    <h1 class="h2 mb-4">{{ position.title }}</h1>
+    <div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Candidate</th><th>Status</th><th>Likes</th><th>View</th></tr></thead><tbody>
+    {% for cv in cvs %}<tr><th class="ps-3"><a href="{{ path('app_public_profile_standalone', {id: cv.candidate.id}) }}">{{ cv.candidate.email }}</a></th><td>{{ cv.status.value|title }}</td><td>{{ likeCounts[cv.id] ?? 0 }}</td><td><a href="{{ path('app_cv_show', {id: cv.id}) }}">Open CV</a></td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No published CVs for this position.</td></tr>{% endfor %}
+    </tbody></table></div>
+</main>
+{% endblock %}

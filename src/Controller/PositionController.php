@@ -6,6 +6,8 @@ use App\Entity\Attribute;
 use App\Entity\Position;
 use App\Entity\PositionAccessRule;
 use App\Entity\PositionAttribute;
+use App\Repository\CvLikeRepository;
+use App\Repository\CvRepository;
 use App\Enum\AccessRuleOperator;
 use App\Enum\PositionLevel;
 use App\Repository\AttributeRepository;
@@ -40,6 +42,19 @@ final class PositionController extends AbstractController
             'positions' => $positions,
             'query' => $request->query->get('q', ''),
             'canManage' => $this->isGranted('ROLE_RECRUITER') || $this->isGranted('ROLE_ADMIN'),
+        ]);
+    }
+
+    #[Route('/{id}/cvs', name: 'app_position_cvs', methods: ['GET'])]
+    public function cvs(Position $position, CvRepository $cvRepository, CvLikeRepository $likeRepository): Response
+    {
+        $this->requireRecruiter();
+        $cvs = $cvRepository->findPublishedForPosition($position);
+
+        return $this->render('position/cvs.html.twig', [
+            'position' => $position,
+            'cvs' => $cvs,
+            'likeCounts' => $likeRepository->countsForCvs($cvs),
         ]);
     }
 

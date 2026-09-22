@@ -1,3 +1,12 @@
 {% extends 'base.html.twig' %}
 {% block title %}Public Profile · CV Management{% endblock %}
-{% block body %}<main class="container py-5"><p class="text-uppercase small fw-semibold text-primary mb-1">Public profile</p><h1 class="h2">{{ profileUser.email }}</h1><p class="text-secondary">Public profile details are limited to the account identifier.</p></main>{% endblock %}
+{% block body %}
+<main class="container py-5">
+	<p class="text-uppercase small fw-semibold text-primary mb-1">Public profile</p>
+	<h1 class="h2 mb-1">{{ profileUser.email }}</h1>
+	<p class="text-secondary">Published CVs</p>
+	<div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Status</th><th>Likes</th><th>View</th></tr></thead><tbody>
+	{% for cv in cvs %}<tr><th class="ps-3">{{ cv.position.title }}</th><td>{{ cv.status.value|title }}</td><td>{{ likeCounts[cv.id] ?? 0 }}</td><td><a href="{{ path('app_cv_show', {id: cv.id}) }}">Open CV</a></td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">No published CVs.</td></tr>{% endfor %}
+	</tbody></table></div>
+</main>
+{% endblock %}
