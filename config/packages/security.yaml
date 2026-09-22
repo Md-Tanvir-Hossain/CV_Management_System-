@@ -19,6 +19,8 @@ security:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\UserChecker
+            custom_authenticators:
+                - App\Security\OAuthAuthenticator
             form_login:
                 login_path: app_login
                 check_path: app_login
@@ -37,6 +39,7 @@ security:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/connect, roles: PUBLIC_ACCESS }
 
 
 when@test:

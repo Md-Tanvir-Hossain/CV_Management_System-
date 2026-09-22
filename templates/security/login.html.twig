@@ -11,5 +11,9 @@
         <a class="btn btn-link" href="{{ path('app_register') }}">Create account</a>
         <a class="btn btn-link text-secondary" href="{{ path('app_admin_user_new') }}">Create Admin account</a>
     </form>
+    <div class="d-grid gap-2 mt-4">
+        <a class="btn btn-outline-danger" href="{{ path('app_connect_google') }}">Continue with Google</a>
+        <a class="btn btn-outline-primary" href="{{ path('app_connect_facebook') }}">Continue with Facebook</a>
+    </div>
 </main>
 {% endblock %}
