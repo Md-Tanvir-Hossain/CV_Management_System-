@@ -44,16 +44,15 @@ final class AdminAccessControlTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testUnauthenticatedCanAccessNewAdminUserForm(): void
+    public function testUnauthenticatedCannotAccessNewAdminUserForm(): void
     {
         $client = static::createClient();
         $client->request('GET', '/admin/users/new');
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('form[name="admin_user"]');
+        self::assertResponseRedirects('/login');
     }
 
-    public function testCandidateCanAccessNewAdminUserForm(): void
+    public function testCandidateCannotAccessNewAdminUserForm(): void
     {
         $client = static::createClient();
         $candidate = $this->getOrCreateUser($client, 'candidate-sec-test@example.com', ['ROLE_CANDIDATE']);
@@ -61,10 +60,10 @@ final class AdminAccessControlTest extends WebTestCase
 
         $client->request('GET', '/admin/users/new');
 
-        self::assertResponseIsSuccessful();
+        self::assertResponseStatusCodeSame(403);
     }
 
-    public function testRecruiterCanAccessNewAdminUserForm(): void
+    public function testRecruiterCannotAccessNewAdminUserForm(): void
     {
         $client = static::createClient();
         $recruiter = $this->getOrCreateUser($client, 'recruiter-sec-test@example.com', ['ROLE_RECRUITER']);
@@ -72,36 +71,28 @@ final class AdminAccessControlTest extends WebTestCase
 
         $client->request('GET', '/admin/users/new');
 
-        self::assertResponseIsSuccessful();
+        self::assertResponseStatusCodeSame(403);
     }
 
-    public function testUnauthenticatedCanSubmitNewAdminUserFormAndCreateAdminAccount(): void
+    public function testUnauthenticatedCannotSubmitNewAdminUserForm(): void
     {
         $client = static::createClient();
-        $crawler = $client->request('GET', '/admin/users/new');
-        self::assertResponseIsSuccessful();
-
-        $form = $crawler->selectButton('Create account')->form([
-            'admin_user[email]' => 'new-unrestricted-admin@example.com',
-            'admin_user[password]' => 'SecureAdminPass123!',
+        $client->request('POST', '/admin/users/new', [
+            'admin_user' => ['email' => 'new-unrestricted-admin@example.com', 'password' => 'SecureAdminPass123!'],
         ]);
-
-        $client->submit($form);
         self::assertResponseRedirects('/login');
+    }
 
-        /** @var EntityManagerInterface $em */
-        $em = $client->getContainer()->get('doctrine')->getManager();
-        /** @var UserRepository $repo */
-        $repo = $em->getRepository(User::class);
-        $createdUser = $repo->findOneBy(['email' => 'new-unrestricted-admin@example.com']);
+    public function testAdminCanAccessNewAdminUserForm(): void
+    {
+        $client = static::createClient();
+        $admin = $this->getOrCreateUser($client, 'admin-sec-test@example.com', ['ROLE_ADMIN']);
+        $client->loginUser($admin);
 
-        self::assertInstanceOf(User::class, $createdUser);
-        self::assertContains('ROLE_ADMIN', $createdUser->getRoles());
+        $client->request('GET', '/admin/users/new');
 
-        // Verify the created admin can authenticate and access /admin/users
-        $client->loginUser($createdUser);
-        $client->request('GET', '/admin/users');
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[name="admin_user"]');
     }
 
     public function testAdminAccessToUsersIndexIsSuccessful(): void

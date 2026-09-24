@@ -31,6 +31,7 @@ final class AdminUserController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_user_new', methods: ['GET', 'POST'], priority: 10)]
+    #[IsGranted('ROLE_ADMIN')]
     public function new(
         FormFactoryInterface $formFactory,
         Request $request,

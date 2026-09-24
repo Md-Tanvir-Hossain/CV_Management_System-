@@ -2,10 +2,68 @@
 {% block title %}Dashboard · CV Management{% endblock %}
 {% block body %}
 <main class="container py-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div><p class="text-uppercase small fw-semibold text-primary mb-1">Platform dashboard</p><h1 class="h2 mb-0">Recruitment overview</h1></div><a class="btn btn-outline-primary" href="{{ path('app_position_index') }}">Browse positions</a></div>
-    <section class="row row-cols-2 row-cols-lg-5 g-3 mb-5">{% for label, value in {'CVs created in 24h': statistics.cvLast24h, 'Positions': statistics.positions, 'Candidates': statistics.candidates, 'Recruiters': statistics.recruiters, 'Published CVs': statistics.publishedCvs} %}<div class="col"><div class="border rounded bg-white p-3 h-100"><div class="h3 mb-1">{{ value }}</div><small class="text-secondary">{{ label }}</small></div></div>{% endfor %}</section>
-    <section class="mb-5"><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h4 mb-0">Latest positions</h2><a href="{{ path('app_position_index') }}">View all</a></div><div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Company</th><th>Visibility</th><th>Updated</th></tr></thead><tbody>{% for position in latestPositions %}<tr><th class="ps-3">{{ position.title }}</th><td>{{ position.company ?: '—' }}</td><td>{{ position.isPublic ? 'Public' : 'Restricted' }}</td><td>{{ position.updatedAt|date('Y-m-d H:i') }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-4">No positions available.</td></tr>{% endfor %}</tbody></table></div></section>
-    <section class="mb-5"><h2 class="h4 mb-3">Most popular positions</h2><div class="table-responsive border rounded bg-white"><table class="table align-middle mb-0"><thead><tr><th class="ps-3">Position</th><th>Company</th><th>Visibility</th></tr></thead><tbody>{% for position in popularPositions %}<tr><th class="ps-3">{{ position.title }}</th><td>{{ position.company ?: '—' }}</td><td>{{ position.isPublic ? 'Public' : 'Restricted' }}</td></tr>{% else %}<tr><td colspan="3" class="text-center text-secondary py-4">No positions available.</td></tr>{% endfor %}</tbody></table></div></section>
-    <section><h2 class="h4 mb-3">Technology tags</h2><div class="d-flex flex-wrap gap-2">{% for item in tagCloud %}<a class="badge text-bg-light text-decoration-none" href="{{ path('app_search', {q: item.tag, type: tagSearchType}) }}">{{ item.tag }} · {{ item.total }}</a>{% else %}<span class="text-secondary">No project tags yet.</span>{% endfor %}</div><small class="text-secondary d-block mt-2">Tag searches open published CVs for recruiters and matching positions for candidates.</small></section>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <p class="text-uppercase small fw-semibold text-primary mb-1">Platform dashboard</p>
+            <h1 class="h2 mb-0">Recruitment overview</h1>
+        </div>
+        <div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{{ path('app_position_index') }}">Browse
+                positions</a>{% if is_granted('ROLE_ADMIN') %}<a class="btn btn-primary"
+                href="{{ path('app_admin_user_index') }}">Admin Dashboard</a>{% endif %}</div>
+    </div>
+    <section class="row row-cols-2 row-cols-lg-5 g-3 mb-5">{% for label, value in {'CVs created in 24h':
+        statistics.cvLast24h, 'Positions': statistics.positions, 'Candidates': statistics.candidates, 'Recruiters':
+        statistics.recruiters, 'Published CVs': statistics.publishedCvs} %}<div class="col">
+            <div class="border rounded bg-white p-3 h-100">
+                <div class="h3 mb-1">{{ value }}</div><small class="text-secondary">{{ label }}</small>
+            </div>
+        </div>{% endfor %}</section>
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Latest positions</h2><a href="{{ path('app_position_index') }}">View all</a>
+        </div>
+        <div class="table-responsive border rounded bg-white">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Position</th>
+                        <th>Company</th>
+                        <th>Visibility</th>
+                        <th>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>{% for position in latestPositions %}<tr>
+                        <th class="ps-3">{{ position.title }}</th>
+                        <td>{{ position.company ?: '—' }}</td>
+                        <td>{{ position.isPublic ? 'Public' : 'Restricted' }}</td>
+                        <td>{{ position.updatedAt|date('Y-m-d H:i') }}</td>
+                    </tr>{% else %}<tr>
+                        <td colspan="4" class="text-center text-secondary py-4">No positions available.</td>
+                    </tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </section>
+    <section class="mb-5">
+        <h2 class="h4 mb-3">Most popular positions</h2>
+        <div class="table-responsive border rounded bg-white">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Position</th>
+                        <th>Company</th>
+                        <th>Visibility</th>
+                    </tr>
+                </thead>
+                <tbody>{% for position in popularPositions %}<tr>
+                        <th class="ps-3">{{ position.title }}</th>
+                        <td>{{ position.company ?: '—' }}</td>
+                        <td>{{ position.isPublic ? 'Public' : 'Restricted' }}</td>
+                    </tr>{% else %}<tr>
+                        <td colspan="3" class="text-center text-secondary py-4">No positions available.</td>
+                    </tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </section>
+    
 </main>
 {% endblock %}

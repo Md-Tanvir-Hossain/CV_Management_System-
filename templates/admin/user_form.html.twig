@@ -1,13 +1,17 @@
 {% extends 'base.html.twig' %}
 {% block title %}Create Admin Account · CV Management{% endblock %}
 {% block body %}
-<main class="container py-5" style="max-width: 30rem;">
-    <div class="mb-4"><p class="text-uppercase small fw-semibold text-primary mb-1">M11 · Administration</p><h1 class="h2 mb-0">Create admin account</h1></div>
-    {{ form_start(admin_user_form) }}
-        {{ form_row(admin_user_form.email) }}
-        {{ form_row(admin_user_form.password) }}
-        <button class="btn btn-primary" type="submit">Create account</button>
-        <a class="btn btn-outline-secondary" href="{{ is_granted('ROLE_ADMIN') ? path('app_admin_user_index') : path('app_home') }}">Cancel</a>
-    {{ form_end(admin_user_form) }}
+<main class="container py-5">
+    <div class="mx-auto" style="max-width: 30rem;">
+        <h1 class="h3 mb-4">Create admin account</h1>
+        {{ form_start(admin_user_form) }}
+            {{ form_row(admin_user_form.email) }}
+            {{ form_row(admin_user_form.password) }}
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Create account</button>
+                <a class="btn btn-outline-secondary" href="{{ is_granted('ROLE_ADMIN') ? path('app_admin_user_index') : path('app_home') }}">Cancel</a>
+            </div>
+        {{ form_end(admin_user_form) }}
+    </div>
 </main>
 {% endblock %}
