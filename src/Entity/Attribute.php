@@ -35,7 +35,7 @@ class Attribute
     #[ORM\Column(type: Types::JSON)]
     private array $options = [];
 
-    #[ORM\Column(type: Types::JSON)]
+    #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
     private array $tuning = [];
 
     #[ORM\Column]

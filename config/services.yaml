@@ -10,6 +10,13 @@ parameters:
 
 services:
     League\CommonMark\CommonMarkConverter: ~
+    session.handler.pdo:
+        class: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
+        arguments:
+            $pdoOrDsn: '%env(DATABASE_URL)%'
+            $options:
+                db_table: sessions
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
