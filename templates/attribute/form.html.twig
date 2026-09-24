@@ -9,7 +9,11 @@
         {{ form_row(form.type) }}
         {{ form_row(form.description) }}
         {{ form_row(form.optionsText) }}
+        <fieldset class="border rounded p-3 mb-3"><legend class="float-none w-auto px-2 h6">Optional value validation</legend><p class="small text-secondary">Only fields matching the selected data type are used.</p><div data-tuning-input>{{ form_row(form.maxLength) }}</div><div data-tuning-input>{{ form_row(form.pattern) }}</div><div data-tuning-input>{{ form_row(form.minValue) }}</div><div data-tuning-input>{{ form_row(form.maxValue) }}</div><div data-tuning-input>{{ form_row(form.minDate) }}</div><div data-tuning-input>{{ form_row(form.maxDate) }}</div></fieldset>
         <button class="btn btn-primary" type="submit">Save attribute</button>
     {{ form_end(form) }}
 </main>
+    <script>
+    (() => { const type = document.querySelector('#attribute_type'); const fields = [...document.querySelectorAll('[data-tuning-input]')]; const refresh = () => { const value = type?.value || ''; fields.forEach((field) => { const input = field.querySelector('[data-tuning]'); field.hidden = !input?.dataset.tuning.split(' ').includes(value); }); }; type?.addEventListener('change', refresh); refresh(); })();
+    </script>
 {% endblock %}

@@ -7,6 +7,7 @@ use App\Enum\AttributeCategory;
 use App\Enum\AttributeType as AttributeDataType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -27,7 +28,13 @@ final class AttributeType extends AbstractType
                 'label' => 'Dropdown options (one per line)',
                 'help' => 'Used only for one-of-many dropdown attributes.',
                 'attr' => ['rows' => 3],
-            ]);
+            ])
+            ->add('maxLength', IntegerType::class, ['mapped' => false, 'required' => false, 'label' => 'Maximum length', 'attr' => ['min' => 1, 'data-tuning' => 'string text']])
+            ->add('pattern', TextType::class, ['mapped' => false, 'required' => false, 'label' => 'Regular expression', 'attr' => ['data-tuning' => 'string']])
+            ->add('minValue', TextType::class, ['mapped' => false, 'required' => false, 'label' => 'Minimum numeric value', 'attr' => ['data-tuning' => 'numeric']])
+            ->add('maxValue', TextType::class, ['mapped' => false, 'required' => false, 'label' => 'Maximum numeric value', 'attr' => ['data-tuning' => 'numeric']])
+            ->add('minDate', TextType::class, ['mapped' => false, 'required' => false, 'label' => 'Earliest date', 'attr' => ['type' => 'date', 'data-tuning' => 'date period']])
+            ->add('maxDate', TextType::class, ['mapped' => false, 'required' => false, 'label' => 'Latest date', 'attr' => ['type' => 'date', 'data-tuning' => 'date period']]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

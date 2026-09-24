@@ -45,6 +45,7 @@ final class AttributeController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->applyOptions($attribute, $form->get('optionsText')->getData());
+            $this->applyTuning($attribute, $form);
             $entityManager->persist($attribute);
             $entityManager->flush();
             $this->addFlash('success', 'Attribute created.');
@@ -61,10 +62,12 @@ final class AttributeController extends AbstractController
         $this->requireRecruiter();
         $form = $formFactory->create(AttributeType::class, $attribute, ['action' => $this->generateUrl('app_attribute_edit', ['id' => $attribute->getId()])]);
         $form->get('optionsText')->setData(implode("\n", $attribute->getOptions()));
+        $this->setTuningFields($attribute, $form);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->applyOptions($attribute, $form->get('optionsText')->getData());
+            $this->applyTuning($attribute, $form);
             $attribute->touch();
             $entityManager->flush();
             $this->addFlash('success', 'Attribute updated.');
@@ -105,5 +108,26 @@ final class AttributeController extends AbstractController
     {
         $values = is_string($options) ? preg_split('/\R/', $options) : [];
         $attribute->setOptions(array_values(array_filter(array_map('trim', $values ?: []))));
+    }
+
+    private function applyTuning(Attribute $attribute, \Symfony\Component\Form\FormInterface $form): void
+    {
+        $tuning = [];
+        foreach (['maxLength', 'pattern', 'minValue', 'maxValue', 'minDate', 'maxDate'] as $field) {
+            $value = $form->get($field)->getData();
+            if ($value !== null && trim((string) $value) !== '') {
+                $tuning[$field] = is_string($value) ? trim($value) : $value;
+            }
+        }
+        $attribute->setTuning($tuning);
+    }
+
+    private function setTuningFields(Attribute $attribute, \Symfony\Component\Form\FormInterface $form): void
+    {
+        foreach ($attribute->getTuning() as $field => $value) {
+            if ($form->has($field)) {
+                $form->get($field)->setData($value);
+            }
+        }
     }
 }

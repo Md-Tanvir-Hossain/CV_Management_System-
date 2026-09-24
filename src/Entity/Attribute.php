@@ -35,6 +35,9 @@ class Attribute
     #[ORM\Column(type: Types::JSON)]
     private array $options = [];
 
+    #[ORM\Column(type: Types::JSON)]
+    private array $tuning = [];
+
     #[ORM\Column]
     private bool $isBuiltin = false;
 
@@ -64,6 +67,8 @@ class Attribute
     public function setType(AttributeType $type): static { $this->type = $type; return $this; }
     public function getOptions(): array { return $this->options; }
     public function setOptions(array $options): static { $this->options = array_values($options); return $this; }
+    public function getTuning(): array { return $this->tuning; }
+    public function setTuning(array $tuning): static { $this->tuning = $tuning; return $this; }
     public function isBuiltin(): bool { return $this->isBuiltin; }
     public function setIsBuiltin(bool $isBuiltin): static { $this->isBuiltin = $isBuiltin; return $this; }
     public function getVersion(): int { return $this->version; }

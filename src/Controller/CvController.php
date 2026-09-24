@@ -16,7 +16,11 @@ use App\Repository\UserRepository;
 use App\Service\CvProjection;
 use App\Service\CvSearchIndexer;
 use App\Service\PositionAccessEvaluator;
+use App\Service\AttributeValueValidator;
 use Doctrine\ORM\EntityManagerInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Endroid\QrCode\Builder\Builder;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,6 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Route('/cvs')]
 final class CvController extends AbstractController
@@ -70,6 +75,43 @@ final class CvController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/pdf', name: 'app_cv_pdf', methods: ['GET'])]
+    public function pdf(CV $cv, Request $request, CvProjection $projection): Response
+    {
+        $this->assertCanView($cv);
+        if ($cv->getStatus()->value !== 'published') {
+            throw $this->createNotFoundException('CV not found.');
+        }
+
+        $cvUrl = $this->generateUrl('app_cv_show', ['id' => $cv->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $qrCode = new Builder(data: $cvUrl, size: 120, margin: 4);
+        $qrCode = $qrCode->build();
+        $data = $projection->forCv($cv);
+        $html = $this->renderView('cv/show.html.twig', [
+            'cv' => $cv,
+            'attributes' => $data['attributes'],
+            'projects' => $data['projects'],
+            'missingValues' => false,
+            'editable' => false,
+            'likeCount' => 0,
+            'liked' => false,
+            'pdf' => true,
+            'qrCodeDataUri' => $qrCode->getDataUri(),
+        ]);
+
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4');
+        $dompdf->render();
+
+        return new Response($dompdf->output(), Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="cv-'.$cv->getId().'.pdf"',
+        ]);
+    }
+
     #[Route('/{id}/like', name: 'app_cv_like', methods: ['POST'])]
     public function toggleLike(CV $cv, Request $request, CvLikeRepository $likeRepository, EntityManagerInterface $entityManager): Response
     {
@@ -91,7 +133,7 @@ final class CvController extends AbstractController
     }
 
     #[Route('/{id}/attributes/{attributeId}', name: 'app_cv_attribute_update', methods: ['PATCH'])]
-    public function updateAttribute(CV $cv, int $attributeId, Request $request, PositionAttributeRepository $positionAttributeRepository, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager): JsonResponse
+    public function updateAttribute(CV $cv, int $attributeId, Request $request, PositionAttributeRepository $positionAttributeRepository, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager, AttributeValueValidator $valueValidator): JsonResponse
     {
         $this->assertOwner($cv);
         $attribute = $entityManager->getRepository(Attribute::class)->find($attributeId);
@@ -112,7 +154,11 @@ final class CvController extends AbstractController
         } elseif ((int) $payload['version'] !== $value->getVersion()) {
             return new JsonResponse(['message' => 'This profile changed elsewhere. Reload before saving.'], Response::HTTP_CONFLICT);
         }
-        $value->setValue(is_scalar($payload['value']) ? (string) $payload['value'] : null);
+        $newValue = is_scalar($payload['value']) ? (string) $payload['value'] : null;
+        if (($message = $valueValidator->validate($attribute, $newValue)) !== null) {
+            return new JsonResponse(['message' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $value->setValue($newValue);
         try {
             $entityManager->flush();
         } catch (OptimisticLockException) {

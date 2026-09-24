@@ -25,6 +25,15 @@ final class ProjectRepository extends ServiceEntityRepository
             ->getQuery()->getResult();
     }
 
+    public function countForOwner(User $owner): int
+    {
+        return (int) $this->createQueryBuilder('project')
+            ->select('COUNT(project.id)')
+            ->where('project.owner = :owner')
+            ->setParameter('owner', $owner)
+            ->getQuery()->getSingleScalarResult();
+    }
+
     /** @return list<string> */
     public function findDistinctTags(): array
     {

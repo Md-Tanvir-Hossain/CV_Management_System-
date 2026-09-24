@@ -25,6 +25,16 @@ final class CvLikeRepository extends ServiceEntityRepository
         return $this->findOneBy(['cv' => $cv, 'recruiter' => $recruiter]) instanceof CvLike;
     }
 
+    public function countReceivedByCandidate(User $candidate): int
+    {
+        return (int) $this->createQueryBuilder('cvLike')
+            ->select('COUNT(cvLike.id)')
+            ->join('cvLike.cv', 'cv')
+            ->where('cv.candidate = :candidate')
+            ->setParameter('candidate', $candidate)
+            ->getQuery()->getSingleScalarResult();
+    }
+
     /** @param list<CV> $cvs @return array<int, int> */
     public function countsForCvs(array $cvs): array
     {

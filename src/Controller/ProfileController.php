@@ -15,6 +15,8 @@ use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Service\PositionAccessEvaluator;
 use App\Service\CvSearchIndexer;
+use App\Service\BadgeService;
+use App\Service\AttributeValueValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,6 +42,7 @@ final class ProfileController extends AbstractController
         EntityManagerInterface $entityManager,
         Request $request,
         UserRepository $userRepository,
+        BadgeService $badgeService,
     ): Response {
         $user = $this->profileOwner($request, $userRepository);
         $values = $valueRepository->findForUser($user);
@@ -73,6 +76,18 @@ final class ProfileController extends AbstractController
             'cvs' => $cvs,
             'cvLikeCounts' => $likeRepository->countsForCvs($cvs),
             'accessiblePositions' => $accessEvaluator->filterAccessible($user, $positionRepository->findForLibrary()),
+            'badges' => $badgeService->earnedBy($user),
+        ]);
+    }
+
+    #[Route('/badges.svg', name: 'app_profile_badges', methods: ['GET'])]
+    public function badges(Request $request, UserRepository $userRepository, BadgeService $badgeService): Response
+    {
+        $user = $this->profileOwner($request, $userRepository);
+
+        return new Response($badgeService->svg($badgeService->earnedBy($user)), Response::HTTP_OK, [
+            'Content-Type' => 'image/svg+xml; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="badges.svg"',
         ]);
     }
 
@@ -116,7 +131,7 @@ final class ProfileController extends AbstractController
     }
 
     #[Route('/attributes/{id}/autosave', name: 'app_profile_attribute_autosave', methods: ['PATCH'])]
-    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager, UserRepository $userRepository): JsonResponse
+    public function autosaveAttribute(int $id, Request $request, ProfileAttributeValueRepository $valueRepository, CvSearchIndexer $indexer, EntityManagerInterface $entityManager, UserRepository $userRepository, AttributeValueValidator $valueValidator): JsonResponse
     {
         $user = $this->profileOwner($request, $userRepository);
         $profileValue = $valueRepository->findOneBy(['id' => $id, 'user' => $user]);
@@ -133,7 +148,11 @@ final class ProfileController extends AbstractController
             return new JsonResponse(['message' => 'This profile changed elsewhere. Reload before saving.'], Response::HTTP_CONFLICT);
         }
 
-        $profileValue->setValue(is_scalar($payload['value']) ? (string) $payload['value'] : null);
+        $value = is_scalar($payload['value']) ? (string) $payload['value'] : null;
+        if (($message = $valueValidator->validate($profileValue->getAttribute(), $value)) !== null) {
+            return new JsonResponse(['message' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $profileValue->setValue($value);
         try {
             $entityManager->flush();
         } catch (OptimisticLockException) {

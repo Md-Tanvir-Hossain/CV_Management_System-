@@ -24,6 +24,15 @@ final class CvRepository extends ServiceEntityRepository
             ->orderBy('cv.updatedAt', 'DESC')->getQuery()->getResult();
     }
 
+    public function countForCandidate(User $candidate): int
+    {
+        return (int) $this->createQueryBuilder('cv')
+            ->select('COUNT(cv.id)')
+            ->where('cv.candidate = :candidate')
+            ->setParameter('candidate', $candidate)
+            ->getQuery()->getSingleScalarResult();
+    }
+
     /** @return list<CV> */
     public function findPublishedForPosition(Position $position): array
     {
