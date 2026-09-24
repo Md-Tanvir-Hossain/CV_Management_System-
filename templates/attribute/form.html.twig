@@ -1,19 +1,184 @@
 {% extends 'base.html.twig' %}
+
 {% block title %}{{ heading }} · CV Management{% endblock %}
+
 {% block body %}
-<main class="container py-5" style="max-width: 48rem;">
-    <div class="d-flex justify-content-between align-items-center mb-4"><h1 class="h2 mb-0">{{ heading }}</h1><a class="btn btn-outline-secondary" href="{{ path('app_attribute_index') }}">Back to library</a></div>
-    {{ form_start(form) }}
-        {{ form_row(form.name) }}
-        {{ form_row(form.category) }}
-        {{ form_row(form.type) }}
-        {{ form_row(form.description) }}
-        {{ form_row(form.optionsText) }}
-        <fieldset class="border rounded p-3 mb-3"><legend class="float-none w-auto px-2 h6">Optional value validation</legend><p class="small text-secondary">Only fields matching the selected data type are used.</p><div data-tuning-input>{{ form_row(form.maxLength) }}</div><div data-tuning-input>{{ form_row(form.pattern) }}</div><div data-tuning-input>{{ form_row(form.minValue) }}</div><div data-tuning-input>{{ form_row(form.maxValue) }}</div><div data-tuning-input>{{ form_row(form.minDate) }}</div><div data-tuning-input>{{ form_row(form.maxDate) }}</div></fieldset>
-        <button class="btn btn-primary" type="submit">Save attribute</button>
-    {{ form_end(form) }}
+
+<main class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9 col-xl-8">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">{{ heading }}</h1>
+
+                <a class="btn btn-outline-secondary"
+                   href="{{ path('app_attribute_index') }}">
+                    Back to library
+                </a>
+            </div>
+
+            {{ form_start(form) }}
+
+                {# Name #}
+                <div class="mb-3">
+                    {{ form_label(form.name, null, {
+                        'label_attr': {
+                            'class': 'form-label'
+                        }
+                    }) }}
+
+                    {{ form_widget(form.name, {
+                        'attr': {
+                            'class': 'form-control'
+                        }
+                    }) }}
+
+                    {{ form_errors(form.name) }}
+                </div>
+
+                {# Category #}
+                <div class="mb-3">
+                    {{ form_label(form.category, null, {
+                        'label_attr': {
+                            'class': 'form-label'
+                        }
+                    }) }}
+
+                    {{ form_widget(form.category, {
+                        'attr': {
+                            'class': 'form-select'
+                        }
+                    }) }}
+
+                    {{ form_errors(form.category) }}
+                </div>
+
+                {# Type #}
+                <div class="mb-3">
+                    {{ form_label(form.type, null, {
+                        'label_attr': {
+                            'class': 'form-label'
+                        }
+                    }) }}
+
+                    {{ form_widget(form.type, {
+                        'attr': {
+                            'class': 'form-select'
+                        }
+                    }) }}
+
+                    {{ form_errors(form.type) }}
+                </div>
+
+                {# Description #}
+                <div class="mb-3">
+                    {{ form_label(form.description, null, {
+                        'label_attr': {
+                            'class': 'form-label'
+                        }
+                    }) }}
+
+                    {{ form_widget(form.description, {
+                        'attr': {
+                            'class': 'form-control',
+                            'rows': 4
+                        }
+                    }) }}
+
+                    {{ form_errors(form.description) }}
+                </div>
+
+                {# Dropdown options #}
+                <div class="mb-4">
+                    {{ form_label(form.optionsText, null, {
+                        'label_attr': {
+                            'class': 'form-label'
+                        }
+                    }) }}
+
+                    {{ form_widget(form.optionsText, {
+                        'attr': {
+                            'class': 'form-control',
+                            'rows': 4
+                        }
+                    }) }}
+
+                    {{ form_errors(form.optionsText) }}
+
+                    <div class="form-text">
+                        Used only for one-of-many dropdown attributes.
+                    </div>
+                </div>
+
+                {# Optional validation #}
+                <fieldset class="border rounded p-3 mb-4">
+
+                    <legend class="float-none w-auto px-2 h6 mb-0">
+                        Optional value validation
+                    </legend>
+
+                    <p class="small text-secondary mb-4">
+                        Only fields matching the selected data type are used.
+                    </p>
+
+                    <div data-tuning-input class="mb-3">
+                        {{ form_row(form.maxLength) }}
+                    </div>
+
+                    <div data-tuning-input class="mb-3">
+                        {{ form_row(form.pattern) }}
+                    </div>
+
+                    <div data-tuning-input class="mb-3">
+                        {{ form_row(form.minValue) }}
+                    </div>
+
+                    <div data-tuning-input class="mb-3">
+                        {{ form_row(form.maxValue) }}
+                    </div>
+
+                    <div data-tuning-input class="mb-3">
+                        {{ form_row(form.minDate) }}
+                    </div>
+
+                    <div data-tuning-input>
+                        {{ form_row(form.maxDate) }}
+                    </div>
+
+                </fieldset>
+
+                <button class="btn btn-primary" type="submit">
+                    Save attribute
+                </button>
+
+            {{ form_end(form) }}
+
+        </div>
+    </div>
+
 </main>
-    <script>
-    (() => { const type = document.querySelector('#attribute_type'); const fields = [...document.querySelectorAll('[data-tuning-input]')]; const refresh = () => { const value = type?.value || ''; fields.forEach((field) => { const input = field.querySelector('[data-tuning]'); field.hidden = !input?.dataset.tuning.split(' ').includes(value); }); }; type?.addEventListener('change', refresh); refresh(); })();
-    </script>
+
+<script>
+(() => {
+    const type = document.querySelector('#attribute_type');
+    const fields = [...document.querySelectorAll('[data-tuning-input]')];
+
+    const refresh = () => {
+        const value = type?.value || '';
+
+        fields.forEach((field) => {
+            const input = field.querySelector('[data-tuning]');
+
+            field.hidden = !input?.dataset.tuning
+                .split(' ')
+                .includes(value);
+        });
+    };
+
+    type?.addEventListener('change', refresh);
+    refresh();
+})();
+</script>
+
 {% endblock %}

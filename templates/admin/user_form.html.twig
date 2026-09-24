@@ -1,17 +1,54 @@
 {% extends 'base.html.twig' %}
+
 {% block title %}Create Admin Account · CV Management{% endblock %}
+
 {% block body %}
+
 <main class="container py-5">
-    <div class="mx-auto" style="max-width: 30rem;">
-        <h1 class="h3 mb-4">Create admin account</h1>
-        {{ form_start(admin_user_form) }}
-            {{ form_row(admin_user_form.email) }}
-            {{ form_row(admin_user_form.password) }}
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Create account</button>
-                <a class="btn btn-outline-secondary" href="{{ is_granted('ROLE_ADMIN') ? path('app_admin_user_index') : path('app_home') }}">Cancel</a>
-            </div>
-        {{ form_end(admin_user_form) }}
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+
+            <h1 class="h3 mb-4">Create admin account</h1>
+
+            {{ form_start(admin_user_form) }}
+
+                <div class="mb-3">
+                    {{ form_label(admin_user_form.email) }}
+                    {{ form_widget(admin_user_form.email, {
+                        'attr': {
+                            'class': 'form-control'
+                        }
+                    }) }}
+                    {{ form_errors(admin_user_form.email) }}
+                </div>
+
+                <div class="mb-4">
+                    {{ form_label(admin_user_form.password) }}
+                    {{ form_widget(admin_user_form.password, {
+                        'attr': {
+                            'class': 'form-control'
+                        }
+                    }) }}
+                    {{ form_errors(admin_user_form.password) }}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">
+                        Create account
+                    </button>
+
+                    <a class="btn btn-outline-secondary"
+                       href="{{ is_granted('ROLE_ADMIN') ? path('app_admin_user_index') : path('app_home') }}">
+                        Cancel
+                    </a>
+                </div>
+
+            {{ form_end(admin_user_form) }}
+
+        </div>
     </div>
+
 </main>
+
 {% endblock %}
