@@ -11,6 +11,11 @@ framework:
     #esi: true
     #fragments: true
 
+when@prod:
+    framework:
+        router:
+            default_uri: 'https://cv-management-system-6vkv.onrender.com'
+
 when@test:
     framework:
         test: true
